@@ -12,10 +12,10 @@ END = "<END>"
 TRANSITION_ALPHA = 0.1
 EMISSION_ALPHA = 0.01
 SUFFIX_ALPHA = 0.1
-MAX_SUFFIX_LENGTH = 6
-RARE_WORD_LIMIT = 2
+MAX_SUFFIX_LENGTH = 5
+RARE_WORD_LIMIT = 4
 MIN_SUFFIX_OBSERVATIONS = 2
-SUFFIX_BACKOFF_STRENGTH = 5.0
+SUFFIX_BACKOFF_STRENGTH = 20.0
 OOV_TAG_CONTEXT_WEIGHT = 0.35
 OOV_CONTEXT_MARGIN = 0.05
 
@@ -232,30 +232,30 @@ class HMMTagger:
     def _rescore_oov(self, words: list[str], first_pass_tags: list[str]) -> list[str]:
         """Use frozen first-pass neighbours to make one conservative OOV revision."""
         revised = list(first_pass_tags)
-        # for position, word in enumerate(words):
-        #     if word in self.vocabulary:
-        #         continue
-        #     previous_tag = first_pass_tags[position - 1] if position else START
-        #     next_tag = first_pass_tags[position + 1] if position + 1 < len(words) else END
-        #     scores: dict[str, float] = {}
-        #     for tag in self.tags:
-        #         score = (
-        #             self._unknown_logprob(tag, word, position)
-        #             + self._transition_logprob(previous_tag, tag)
-        #             + self._transition_logprob(tag, next_tag)
-        #         )
-        #         context_score = self._tag_context_logprob(previous_tag, tag, next_tag)
-        #         if context_score is not None:
-        #             score += self.model["oov_tag_context_weight"] * context_score
-        #         scores[tag] = score
-        #     original = first_pass_tags[position]
-        #     best = max(scores, key=scores.get)
-        #     if scores[best] > scores[original] + self.model["oov_context_margin"]:
-        #         revised[position] = best
+        for position, word in enumerate(words):
+            if word in self.vocabulary:
+                continue
+            previous_tag = first_pass_tags[position - 1] if position else START
+            next_tag = first_pass_tags[position + 1] if position + 1 < len(words) else END
+            scores: dict[str, float] = {}
+            for tag in self.tags:
+                score = (
+                    self._unknown_logprob(tag, word, position)
+                    + self._transition_logprob(previous_tag, tag)
+                    + self._transition_logprob(tag, next_tag)
+                )
+                context_score = self._tag_context_logprob(previous_tag, tag, next_tag)
+                if context_score is not None:
+                    score += self.model["oov_tag_context_weight"] * context_score
+                scores[tag] = score
+            original = first_pass_tags[position]
+            best = max(scores, key=scores.get)
+            if scores[best] > scores[original] + self.model["oov_context_margin"]:
+                revised[position] = best
         return revised
 
     def tag(self, words: list[str]) -> list[str]:
-        return self._rescore_oov(words, self._viterbi(words))
+        return self._viterbi(words)
 
     def save(self, path: Path) -> None:
         path.parent.mkdir(parents=True, exist_ok=True)
