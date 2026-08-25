@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 # PA-1: Version 4 Bigram HMM POS tagger
 
 This implementation preserves the required assignment interface:
@@ -20,3 +21,7 @@ Run the basic regression tests with:
 ```powershell
 python -m unittest discover -s tests -v
 ```
+=======
+# NLP-PA1
+This is a bigram HMM model that does POS tagging
+>>>>>>> d3a16dcef7158b0388261e615434128c41a02c64
