@@ -107,7 +107,7 @@ class HMMTagger:
                         suffix_totals[(shape, suffix)] += 1
 
         model = {
-            "version": 4,
+            "version": 1,
             "tags": sorted(tag_counts),
             "tag_counts": dict(tag_counts),
             "transition_counts": {f"{a}\t{b}": n for (a, b), n in transition_counts.items()},
