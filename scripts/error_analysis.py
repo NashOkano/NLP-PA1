@@ -27,6 +27,7 @@ def main() -> None:
     correct = Counter()
     confusions: Counter[tuple[str, str]] = Counter()
     oov_errors: Counter[tuple[str, str, str]] = Counter()
+    group_confusions: Counter[tuple[str, str, str]] = Counter()
     for line_number, (prediction_line, gold_line) in enumerate(zip(predictions, gold), 1):
         predicted = [split_word_tag(token) for token in prediction_line.split()]
         actual = [split_word_tag(token) for token in gold_line.split()]
@@ -41,6 +42,7 @@ def main() -> None:
                 correct[group] += 1
             else:
                 confusions[(gold_tag, predicted_tag)] += 1
+                group_confusions[(gold_tag,predicted_tag,group)] += 1
                 if group == "oov":
                     oov_errors[(gold_word, gold_tag, predicted_tag)] += 1
 
@@ -49,6 +51,15 @@ def main() -> None:
     print("\nMost frequent tag confusions (gold -> predicted):")
     for (gold_tag, predicted_tag), count in confusions.most_common(15):
         print(f"  {gold_tag:>4} -> {predicted_tag:<4} {count}")
+    print("\nTop confusions split by known/OOV:")
+    for (gold_tag, predicted_tag), count in confusions.most_common(15):
+        known = group_confusions[(gold_tag, predicted_tag, "known")]
+        oov = group_confusions[(gold_tag, predicted_tag, "oov")]
+
+        print(
+            f"  {gold_tag:>4} -> {predicted_tag:<4} "
+            f"total={count:<4} known={known:<4} oov={oov:<4}"
+        )
     print("\nMost frequent OOV errors (word: gold -> predicted):")
     for (word, gold_tag, predicted_tag), count in oov_errors.most_common(15):
         print(f"  {word}: {gold_tag} -> {predicted_tag} ({count})")
