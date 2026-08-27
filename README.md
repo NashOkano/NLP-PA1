@@ -1,22 +1,88 @@
-# PA-1: Version 4 Bigram HMM POS tagger
+# POS Tagging using a Bigram HMM
 
-This implementation preserves the required assignment interface:
+A Python 3 implementation of a Part-of-Speech (POS) tagger based on a
+first-order Bigram Hidden Markov Model (HMM).
 
-```powershell
-python build_tagger.py data/train.tags model.json
-python run_tagger.py data/dev.sents model.json results/dev.out
-```
+The system uses transition and emission probabilities with additive smoothing,
+Viterbi decoding, and a suffix/word-shape based approach for handling
+out-of-vocabulary (OOV) words.
 
-Version 4 is a first-order (bigram) HMM decoded with log-space Viterbi. It uses additive smoothing for transitions and known-word emissions. Unknown words use distributions learned from rare training words, separated by word shape (capitalized, all-caps, digit-containing, hyphenated, or lowercase). Suffix evidence is interpolated from short to long suffixes rather than relying on one suffix match; sentence-initial capitalization is intentionally ignored. A single conservative second pass re-scores OOV words using frozen neighboring Viterbi tags and a learned distribution for the middle tag conditioned on that tag pair.
+## Results
 
-Evaluate the dev output with:
+The final model achieves:
 
-```powershell
-python scripts/evaluate.py results/dev.out data/dev.tags
-```
+| Metric | Accuracy |
+|---|---:|
+| **Overall** | **96.4080%** |
+| Known words | 96.70% |
+| OOV words | 85.44% |
 
-Run the basic regression tests with:
+Development set:
 
-```powershell
-python -m unittest discover -s tests -v
-```
+- Total tokens: **47,633**
+- Known tokens: **46,417**
+- OOV tokens: **1,216**
+- Correctly tagged: **45,922**
+
+## Model
+
+The tagger is a first-order HMM with:
+
+- **Transition probabilities:** \(P(t_i \mid t_{i-1})\)
+- **Emission probabilities:** \(P(w_i \mid t_i)\)
+- **Viterbi decoding** for finding the most likely tag sequence
+- **Additive smoothing** for unseen transitions and emissions
+- **Suffix and word-shape features** for OOV words
+- **Second-pass OOV rescoring**
+
+Probabilities are computed in log space during decoding to avoid numerical
+underflow.
+
+## Final Configuration
+
+| Parameter | Value |
+|---|---:|
+| Transition smoothing \(\alpha_T\) | **0.20** |
+| Emission smoothing \(\alpha_E\) | **0.005** |
+| Rare-word limit | **4** |
+| Maximum suffix length | **5** |
+| Minimum suffix observations | **2** |
+| Suffix backoff strength | **20** |
+
+These values were selected through experiments on the development set.
+
+## Repository Structure
+
+```text
+NLP-PA1/
+│
+├── data/
+│   ├── train.tags
+│   ├── dev.sents
+│   └── dev.tags
+│
+├── src/
+│   └── pos_tagger/
+│       └── hmm.py
+│
+├── scripts/
+│   ├── evaluate.py
+│   └── error_analysis.py
+│
+├── notebooks/
+│   └── analysis.ipynb
+│
+├── figures/
+│   ├── known_vs_oov_accuracy.pdf
+│   └── confusion_matrix.pdf
+│
+├── tests/
+│   └── ...
+│
+├── results/
+│   ├── model.json
+│   └── dev.out
+│
+├── build_tagger.py
+├── run_tagger.py
+└── README.md
